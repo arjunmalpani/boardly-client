@@ -196,7 +196,11 @@ export default function Whiteboard({ boardState }) {
   return (
     <div className="fixed inset-0 min-h-[calc(100vh-var(--navbar-height))] mt-16">
       <InviteUser boardId={boardId} />
-      <Tldraw store={store} components={componentsToHide} />
+      <Tldraw
+        store={store}
+        components={componentsToHide}
+        licenseKey={import.meta.env.VITE_TLDRAW_LICENSE_KEY || "tldraw-oss"}
+      />
     </div>
   );
 }
