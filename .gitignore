@@ -1,0 +1,9 @@
+
+node_modules
+dist
+.vscode/*
+.github/copilot-instructions.md
+.github/prompts/
+package-lock.json
+package.json
+node_modules/
