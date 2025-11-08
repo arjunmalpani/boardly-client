@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 export const axioscall = axios.create({
-    baseURL: process.env.NODE_ENV === 'production' ? `${process.env.VITE_BACKEND_URL}/api` : 'http://localhost:5001/api',
+    baseURL: import.meta.env.PROD ? `${import.meta.env.VITE_BACKEND_URL}/api` : 'http://localhost:5001/api',
     withCredentials: true,
     headers: {
         'Content-Type': 'application/json',
