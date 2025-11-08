@@ -14,11 +14,13 @@ export default function LoginPage() {
         </div>
       </div>
       <div className="bg-muted relative hidden lg:block">
-        <img
-          src="/placeholder.svg"
-          alt="Image"
-          className="absolute inset-0 h-full w-full object-cover dark:brightness-[0.2] dark:grayscale"
-        />
+        <div className="h-full w-full flex items-center justify-center p-10">
+          <img
+            src="/placeholder.svg"
+            alt="Image"
+            className="size-3/4 dark:brightness-[0.2] dark:grayscale"
+          />
+        </div>
       </div>
     </div>
   );

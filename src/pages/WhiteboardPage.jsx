@@ -1,194 +1,76 @@
-import { useEffect, useState, useCallback } from "react";
-import { useParams } from "react-router-dom";
-import { createTLStore, throttle, Tldraw } from "tldraw";
-import "tldraw/tldraw.css";
+import { useEffect, useState } from "react";
+import { useParams, Link } from "react-router-dom";
+// --- Fix: Switched to relative path ---
+import { axioscall } from "../lib/axios";
+import { Frown, Home, RefreshCcw } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import Whiteboard from "@/components/Whiteboard";
+import PopoverChat from "@/components/PopoverChat";
 
-// --- Corrected import paths to use your project's alias ---
-import { socket } from "@/lib/socket";
-import { axioscall } from "@/lib/axios";
-import { InviteUser } from "@/components/InviteUser"; // Import new component
-import _, { isEqual, merge } from "lodash";
-const initialSnapshot = {
-  store: {
-    "page:page": {
-      id: "page:page",
-      name: "Page 1",
-      index: "a1",
-      meta: {},
-      typeName: "page",
-    },
-    "document:document": {
-      id: "document:document",
-      gridSize: 10,
-      name: "",
-      meta: {},
-      typeName: "document",
-    },
-  },
-  schema: {
-    schemaVersion: 2,
-    sequences: {
-      "com.tldraw.store": 5,
-      "com.tldraw.asset": 1,
-      "com.tldraw.camera": 1,
-      "com.tldraw.document": 2,
-      "com.tldraw.instance": 25,
-      "com.tldraw.instance_page_state": 5,
-      "com.tldraw.page": 1,
-      "com.tldraw.instance_presence": 6,
-      "com.tldraw.pointer": 1,
-      "com.tldraw.shape": 4,
-      "com.tldraw.asset.bookmark": 2,
-      "com.tldraw.asset.image": 5,
-      "com.tldraw.asset.video": 5,
-      "com.tldraw.shape.arrow": 7,
-      "com.tldraw.shape.bookmark": 2,
-      "com.tldraw.shape.draw": 2,
-      "com.tldraw.shape.embed": 4,
-      "com.tldraw.shape.frame": 1,
-      "com.tldraw.shape.geo": 10,
-      "com.tldraw.shape.group": 0,
-      "com.tldraw.shape.highlight": 1,
-      "com.tldraw.shape.image": 5,
-      "com.tldraw.shape.line": 5,
-      "com.tldraw.shape.note": 9,
-      "com.tldraw.shape.text": 3,
-      "com.tldraw.shape.video": 4,
-      "com.tldraw.binding.arrow": 1,
-    },
-  },
-};
-
-export default function WhiteboardPage({ boardData }) {
+export default function WhiteboardPage() {
   const { id: boardId } = useParams();
-  const [store] = useState(() => createTLStore());
-
-  const componentsToHide = {
-    MainMenu: null,
-    PageMenu: null,
-    ActionsMenu: null,
-  };
-  // --- 1. Throttled function for PRESENCE updates ---
-  const sendPresenceUpdate = useCallback(
-    throttle((presence) => {
-      // Send only presence data (camera, pointers)
-      socket.emit("presence-update", { boardId, presence });
-    }, 30),
-    [boardId]
-  );
-
-  // --- 2. Throttled function for tiny SHAPE CHANGES (real-time) ---
-  const sendShapeUpdate = useCallback(
-    throttle((changes) => {
-      // We MUST convert the Maps to plain Objects before sending
-      const jsonChanges = JSON.parse(JSON.stringify(changes));
-      socket.emit("shape-changes", { boardId, changes: jsonChanges }); // Send the plain object
-    }, 50),
-    [boardId]
-  );
-
-  // --- 3. Throttled function for SAVING the full snapshot ---
-  const sendSnapshotForSave = useCallback(
-    throttle((snapshot) => {
-      // Send the full snapshot (scrubbed of presence) to be saved
-      const snapshotToSend = JSON.parse(JSON.stringify(snapshot));
-      for (const key in snapshotToSend.store) {
-        if (
-          key.startsWith("instance:") ||
-          key.startsWith("instance_presence:") ||
-          key.startsWith("pointer:")
-        ) {
-          delete snapshotToSend.store[key];
-        }
-      }
-      socket.emit("save-snapshot", { boardId, snapshot: snapshotToSend });
-    }, 3000), // Save at most every 3 seconds
-    [boardId]
-  );
-
+  const [loading, setLoading] = useState(true);
+  const [authError, setAuthError] = useState(null);
+  const [boardData, setBoardData] = useState(null);
+  const [messages, setMessages] = useState([]);
   useEffect(() => {
-    let unsubscribeDocument;
-    let unsubscribePresence;
+    const checkAuthAndLoad = async () => {
+      try {
+        setLoading(true);
+        const res = await axioscall.get(`/space/${boardId}`);
+        console.log(res);
 
-    const snapshot = boardData.boardState;
-    const mergedSnapshot = merge({}, initialSnapshot, snapshot);
-    console.log("mergedSnapshot",mergedSnapshot);
-    
-    store.loadStoreSnapshot(mergedSnapshot);
-
-    socket.connect();
-    socket.emit("join-room", boardId);
-
-    const handleDocumentChange = (change) => {
-      if (change.source === "user") {
-        // A. Send tiny changes for real-time sync
-        sendShapeUpdate(change.changes);
-        // B. Send full snapshot for saving
-        sendSnapshotForSave(store.getStoreSnapshot());
+        setMessages(res.data.messages || []);
+        setBoardData(res.data.boardState);
+      } catch (err) {
+        if (err.response) {
+          setAuthError(
+            err.response.data.message || "You don't have access to this page."
+          );
+        } else {
+          setAuthError("Could not connect to the server.");
+        }
+      } finally {
+        setLoading(false);
       }
     };
-    unsubscribeDocument = store.listen(handleDocumentChange, {
-      scope: "document",
-    });
 
-    const handlePresenceChange = (change) => {
-      if (change.source === "user") {
-        const presence = store.getPresence();
-        sendPresenceUpdate(presence);
-      }
-    };
-    unsubscribePresence = store.listen(handlePresenceChange, {
-      scope: "presence",
-    });
-    const handleShapeBroadcast = (data) => {
-      const added = Object.values(data.added);
+    checkAuthAndLoad();
+  }, [boardId]);
 
-      const updatedChangePairs = Object.values(data.updated);
-
-      const recordsToUpdate = updatedChangePairs
-        .map(([oldRecord, newRecord]) => {
-          const hasChanged = !_.isEqual(oldRecord, newRecord);
-          return hasChanged ? newRecord : null;
-        })
-        .filter((record) => record !== null);
-
-      const removed = Object.keys(data.removed);
-
-      store.put(added);
-
-      if (recordsToUpdate.length > 0) {
-        store.put(recordsToUpdate);
-      }
-
-      store.remove(removed);
-    };
-    socket.on("shape-broadcast", handleShapeBroadcast);
-
-    const handlePresenceBroadcast = (data) => {
-      store.put([data.presence]);
-    };
-    socket.on("presence-broadcast", handlePresenceBroadcast);
-
-    return () => {
-      if (unsubscribeDocument) unsubscribeDocument();
-      if (unsubscribePresence) unsubscribePresence();
-      socket.off("shape-broadcast", handleShapeBroadcast);
-      socket.off("presence-broadcast", handlePresenceBroadcast);
-      socket.emit("leave-room", boardId);
-      socket.disconnect();
-    };
-  }, [
-    boardId,
-    store,
-    sendShapeUpdate,
-    sendSnapshotForSave,
-    sendPresenceUpdate,
-  ]);
-
+  // --- Loading State ---
+  if (loading) {
+    return (
+      <div className="fixed inset-0 flex items-center justify-center mt-16">
+        <p>Loading your whiteboard...</p>
+      </div>
+    );
+  }
+  //   Handle Auth Error State
+  if (authError) {
+    return (
+      <div className="fixed inset-0 flex flex-col items-center justify-center mt-16 text-center p-4">
+        <Frown className="w-16 h-16 text-destructive" />
+        <h1 className="mt-4 text-2xl font-bold">{authError}</h1>
+        <div className="flex flex-col sm:flex-row gap-4 mt-6">
+          <Button className="mt-6" onClick={() => window.location.reload()}>
+            <RefreshCcw className="h-4 w-4" />
+            Refresh Page
+          </Button>
+          <Button asChild className="mt-6">
+            <Link to="/dashboard">
+              <Home className="h-4 w-4" />
+              Back to Dashboard
+            </Link>
+          </Button>
+        </div>
+      </div>
+    );
+  }
   return (
-    <div className="fixed inset-0 min-h-[calc(100vh-var(--navbar-height))] mt-16">
-      <InviteUser boardId={boardId} />
-      <Tldraw store={store} components={componentsToHide} />
-    </div>
+    <>
+      <Whiteboard boardState={boardData} />
+      <PopoverChat initialMessages={messages} />
+    </>
   );
 }

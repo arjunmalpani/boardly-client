@@ -5,7 +5,6 @@ import { useEffect } from "react";
 import useAuthStore from "./store/useAuthStore";
 
 // Importing pages
-import HomePage from "./pages/HomePage";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import ProfilePage from "./pages/ProfilePage";
@@ -17,7 +16,6 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import LoadingScreen from "./components/LoadingScreen";
 import { Toaster } from "react-hot-toast";
 import { HeaderLayout } from "./components/HeaderLayout";
-import { SpaceAuthWrapper } from "./components/SpaceAuthWrapper";
 function App() {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const isLoading = useAuthStore((state) => state.isLoading);
@@ -80,10 +78,13 @@ function App() {
             path="/whiteboard/:id"
             element={
               <ProtectedRoute>
-                <SpaceAuthWrapper>
-                  {(boardData) => <WhiteboardPage boardData={boardData} />}
-                </SpaceAuthWrapper>
+                <WhiteboardPage />
               </ProtectedRoute>
+              //   <ProtectedRoute>
+              //     <SpaceAuthWrapper>
+              //       {(boardData) => <WhiteboardPage boardData={boardData} />}
+              //     </SpaceAuthWrapper>
+              //   </ProtectedRoute>
             }
           />
         </Route>

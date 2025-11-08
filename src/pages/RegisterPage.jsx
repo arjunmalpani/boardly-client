@@ -6,11 +6,13 @@ export default function RegisterPage() {
   return (
     <div className="grid min-h-svh lg:grid-cols-2">
       <div className="bg-muted relative hidden lg:block">
-        <img
-          src="/placeholder.svg"
-          alt="Image"
-          className="absolute inset-0 h-full w-full object-cover dark:brightness-[0.2] dark:grayscale"
-        />
+        <div className="h-full w-full flex items-center justify-center p-10">
+          <img
+            src="/placeholder.svg"
+            alt="Image"
+            className="size-3/4 dark:brightness-[0.2] dark:grayscale"
+          />
+        </div>
       </div>
       <div className="flex flex-col gap-4 p-6 md:p-10">
         <div className="flex justify-center gap-2 md:justify-start">

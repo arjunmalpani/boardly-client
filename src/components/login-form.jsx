@@ -32,19 +32,18 @@ export function LoginForm({ className, ...props }) {
     const loginPromise = loginUser({ username, password });
     toast.promise(loginPromise, {
       loading: "Logging in...",
-      success: "Login successful!",
-      error: "Login failed. Please try again.",
+      success: () => {
+        navigate("/dashboard");
+        setPassword("");
+        setIsLoading(false);
+        return "Logged in successfully!";
+      },
+      error: (error) => {
+        setPassword("");
+        setIsLoading(false);
+        return error.response?.data?.message || "Login failed, try again";
+      },
     });
-    try {
-      await loginPromise;
-      //   on successful login, redirect to dashboard
-      navigate("/dashboard");
-    } catch (error) {
-      setError(error.response?.data?.message || "Login failed try again");
-    } finally {
-      setPassword("");
-      setIsLoading(false);
-    }
   };
 
   return (

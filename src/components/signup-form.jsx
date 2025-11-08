@@ -62,18 +62,28 @@ export function SignupForm() {
     const registerPromise = registerUser(formData);
     toast.promise(registerPromise, {
       loading: "Creating your account...",
-      success: "Registration successful!",
-      error: "Registration failed. Please try again.",
+      success: () => {
+        setPassword("");
+        navigate("/dashboard");
+        setIsLoading(false);
+        return "Account created successfully!";
+      },
+      error: (err) => {
+        setIsLoading(false);
+        setPassword("");
+        return (
+          err.response?.data?.message ||
+          "Registration failed. Please try again."
+        );
+      },
     });
     try {
       await registerPromise;
-      navigate("/dashboard");
     } catch (err) {
       setError(
         err.response?.data?.message || "Registration failed. Please try again."
       );
     } finally {
-      setIsLoading(false);
     }
   };
 

@@ -68,6 +68,8 @@ export default function DashboardPage() {
       try {
         setIsLoading(true);
         const res = await axioscall.get("/space");
+        console.log(res);
+
         setSpaces(res.data);
       } catch (err) {
         console.error("Failed to fetch spaces:", err);
@@ -79,7 +81,6 @@ export default function DashboardPage() {
     fetchSpaces();
   }, []);
 
-  // --- 2. Handle axioscall call to create a new space ---
   const handleCreateSpace = async () => {
     if (!newSpaceName.trim()) {
       toast.error("Please enter a name for your space.");
@@ -96,9 +97,9 @@ export default function DashboardPage() {
       success: (res) => {
         const newSpaceId = res.data.spaceId;
         setIsCreating(false);
-        setIsDialogOpen(false); // Close the dialog
-        setNewSpaceName(""); // Reset the input
-        navigate(`/whiteboard/${newSpaceId}`); // Redirect to the new board
+        setIsDialogOpen(false);
+        setNewSpaceName("");
+        navigate(`/whiteboard/${newSpaceId}`);
         return "New space created!";
       },
       error: (err) => {
@@ -108,10 +109,8 @@ export default function DashboardPage() {
     });
   };
 
-  // --- 3. Render the correct content based on state ---
   const renderContent = () => {
     if (isLoading) {
-      // --- Loading State ---
       return (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           <BoardCardSkeleton />
@@ -122,7 +121,6 @@ export default function DashboardPage() {
     }
 
     if (spaces.length === 0) {
-      // --- Empty State ---
       return (
         <div className="flex flex-col items-center justify-center h-64 border-2 border-dashed rounded-lg">
           <FileWarning className="w-12 h-12 text-muted-foreground" />
@@ -152,7 +150,7 @@ export default function DashboardPage() {
           </Button>
         </Card>
 
-        {/* --- Real Board Cards --- */}
+        {/* --- Board Cards --- */}
         {spaces.map((space) => (
           <Card key={space._id} className="hover:shadow-lg transition-shadow">
             <CardHeader>
