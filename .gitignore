@@ -6,3 +6,4 @@ dist
 .github/prompts/
 package-lock.json
 node_modules/
+.env
