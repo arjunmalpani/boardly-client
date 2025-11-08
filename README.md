@@ -83,10 +83,4 @@ If you'd like to contribute, please read `CONTRIBUTING.md` and open a pull reque
 
 If this repo will be published publicly, add a `LICENSE` file at the repository root and update repository settings accordingly.
 
----
-
-If you want, I can:
-- add a short `CONTRIBUTING.md` template (I created one beside this README)
-- switch `src/lib/axios.js` and `src/lib/socket.js` to use `import.meta.env.VITE_BACKEND_URL` and test the change
-
 <!-- End of README -->
